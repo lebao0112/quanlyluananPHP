@@ -1,4 +1,12 @@
 <?php
+session_start();
+if (!isset($_SESSION['username'])) {
+    header("Location: ../login.php");
+    exit();
+}
+
+$isAdmin = ($_SESSION['role'] == 'admin'); // Kiểm tra nếu là Admin
+
 include '../config.php';
 ?>
 <!DOCTYPE html>
@@ -14,12 +22,22 @@ include '../config.php';
 <body>
 
     <div class="container mt-4">
-        <h2 class="text-center mb-4">Danh Sách Quan Hệ Hướng Dẫn</h2>
-        <div class="mb-3 text-end">
-            <a href="add_guidance.php" class="btn btn-success">
-                <i class="bi bi-person-plus"></i> Thêm hướng dẫn
-            </a>
+        <div class="d-flex justify-content-between mb-3">
+            <h2 class="text-center flex-grow-1">Danh Sách Quan Hệ Hướng Dẫn</h2>
+            <a href="../logout.php" class="btn btn-danger">Đăng Xuất</a>
         </div>
+
+
+
+        <!-- Chỉ hiển thị nút "Thêm Quan Hệ" nếu là Admin -->
+        <?php if ($isAdmin) { ?>
+            <div class="mb-3 text-end">
+                <a href="add_guidance.php" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Thêm Quan Hệ
+                </a>
+            </div>
+        <?php } ?>
+
         <table class="table table-striped table-hover">
             <thead class="table-dark">
                 <tr>
@@ -34,24 +52,27 @@ include '../config.php';
             <tbody>
                 <?php
                 $sql = "SELECT h.ID, s.HoTen AS SinhVien, g.HoTen AS GiangVien, h.NgayBatDau, h.GhiChu
-                    FROM SinhVienGiangVienHuongDan h
-                    JOIN SinhVien s ON h.SinhVienID = s.SinhVienID
-                    JOIN GiangVien g ON h.GiangVienID = g.GiangVienID";
+                        FROM SinhVienGiangVienHuongDan h
+                        JOIN SinhVien s ON h.SinhVienID = s.SinhVienID
+                        JOIN GiangVien g ON h.GiangVienID = g.GiangVienID";
                 $result = $conn->query($sql);
 
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
                         echo "<tr>
-                            <td>" . $row["ID"] . "</td>
-                            <td>" . $row["SinhVien"] . "</td>
-                            <td>" . $row["GiangVien"] . "</td>
-                            <td>" . $row["NgayBatDau"] . "</td>
-                            <td>" . $row["GhiChu"] . "</td>
-                            <td>
-                                <a href='edit_guidance.php?id=" . $row["ID"] . "' class='btn btn-primary btn-sm'>Sửa</a>
-                                <a href='delete_guidance.php?id=" . $row["ID"] . "' class='btn btn-danger btn-sm' onclick='return confirm(\"Xóa quan hệ này?\")'>Xóa</a>
-                            </td>
-                          </tr>";
+                                <td>" . $row["ID"] . "</td>
+                                <td>" . $row["SinhVien"] . "</td>
+                                <td>" . $row["GiangVien"] . "</td>
+                                <td>" . $row["NgayBatDau"] . "</td>
+                                <td>" . $row["GhiChu"] . "</td>
+                                <td>";
+                        if ($isAdmin) {
+                            echo "<a href='edit_guidance.php?id=" . $row["ID"] . "' class='btn btn-primary btn-sm'>Sửa</a>
+                                  <a href='delete_guidance.php?id=" . $row["ID"] . "' class='btn btn-danger btn-sm' onclick='return confirm(\"Xóa quan hệ này?\")'>Xóa</a>";
+                        } else {
+                            echo "<span class='text-muted'>Chỉ xem</span>";
+                        }
+                        echo "</td></tr>";
                     }
                 } else {
                     echo "<tr><td colspan='6' class='text-center text-muted'>Không có quan hệ hướng dẫn nào!</td></tr>";
